@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacation Destination Comparison</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f7f5f0;
+    color: #1a1a1a;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+  header {
+    margin-bottom: 24px;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 500;
+    margin: 0 0 8px;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: #666;
+    margin: 0 0 4px;
+  }
+  .controls {
+    background: #fff;
+    border: 0.5px solid #ddd;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .search-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .search-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 0.5px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fafafa;
+  }
+  .search-input:focus {
+    outline: none;
+    border-color: #185fa5;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.1);
+  }
+  .clear-btn {
+    padding: 10px 16px;
+    background: transparent;
+    border: 0.5px solid #ccc;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    color: #444;
+  }
+  .clear-btn:hover { background: #f0f0f0; }
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  .filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .filter-label {
+    font-size: 13px;
+    color: #666;
+    margin-right: 4px;
+    font-weight: 500;
+  }
+  .filter-btn {
+    padding: 5px 12px;
+    border: 0.5px solid #ccc;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    color: #555;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { background: #f0f0f0; }
+  .filter-btn.active {
+    background: #e6f1fb;
+    color: #0c447c;
+    border-color: #185fa5;
+  }
+  .result-count {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+  }
+  .table-wrapper {
+    background: #fff;
+    border: 0.5px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .table-scroll {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead {
+    background: #f7f5f0;
+    border-bottom: 0.5px solid #ddd;
+  }
+  th {
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    background: #f7f5f0;
+    border-bottom: 0.5px solid #ddd;
+    font-size: 12px;
+  }
+  th:hover { background: #efece5; }
+  th .sort-icon {
+    display: inline-block;
+    margin-left: 4px;
+    color: #999;
+    font-size: 10px;
+  }
+  th.sorted .sort-icon { color: #185fa5; }
+  tbody tr {
+    border-bottom: 0.5px solid #eee;
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: #fafaf7; }
+  tbody tr:last-child { border-bottom: none; }
+  td {
+    padding: 12px 10px;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .dest-name {
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .badge-l1 { background: #eaf3de; color: #27500a; }
+  .badge-l2 { background: #faeeda; color: #633806; }
+  .badge-l3 { background: #fcebeb; color: #791f1f; }
+  .badge-domestic { background: #e6f1fb; color: #0c447c; }
+  .badge-rec {
+    background: #185fa5;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 6px;
+    margin-left: 6px;
+  }
+  a {
+    color: #185fa5;
+    text-decoration: none;
+  }
+  a:hover { text-decoration: underline; }
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: #888;
+  }
+  footer {
+    margin-top: 24px;
+    padding: 16px;
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+  }
+  .legend {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .pros-cons {
+    font-size: 12px;
+    line-height: 1.6;
+    min-width: 200px;
+  }
+  .pros-cons-section {
+    margin-bottom: 6px;
+  }
+  .pros-cons-label {
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+  }
+  .pros-label { color: #27500a; }
+  .cons-label { color: #791f1f; }
+  .pros-cons ul {
+    margin: 0;
+    padding-left: 16px;
+  }
+  .pros-cons li {
+    margin-bottom: 2px;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Mobile: card layout instead of table */
+  @media (max-width: 768px) {
+    h1 { font-size: 22px; }
+    .container { padding: 16px 12px; }
+    .table-wrapper { background: transparent; border: none; }
+    .table-scroll { overflow-x: visible; }
+    table, thead, tbody, th, td, tr {
+      display: block;
+    }
+    thead { display: none; }
+    tbody tr {
+      background: #fff;
+      border: 0.5px solid #ddd;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      padding: 14px;
+    }
+    tbody tr:hover { background: #fff; }
+    td {
+      padding: 6px 0;
+      border: none;
+      position: relative;
+      padding-left: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    td:before {
+      content: attr(data-label);
+      font-size: 11px;
+      font-weight: 500;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    td.mobile-header {
+      border-bottom: 0.5px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 6px;
+    }
+    td.mobile-header:before { display: none; }
+    .mobile-sort-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .mobile-sort-label {
+      font-size: 13px;
+      color: #666;
+      font-weight: 500;
+    }
+  }
+  @media (min-width: 769px) {
+    .mobile-sort-row { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Vacation destination comparison</h1>
+    <p class="subtitle">Portland, OR departure · June – August 2026 · US passport holders</p>
+    <p class="subtitle">Budget: ~$1,000/person flights · ~$2,000/person food &amp; activities · hotels via Travorium</p>
+  </header>
+
+  <div class="controls">
+    <div class="search-row">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search destinations, activities, food..." />
+      <button class="clear-btn" id="clearBtn">Clear</button>
+    </div>
+    <div class="filter-row">
+      <div class="filter-group">
+        <span class="filter-label">Region:</span>
+        <button class="filter-btn active" data-filter="region" data-value="all">All</button>
+        <button class="filter-btn" data-filter="region" data-value="americas">Americas</button>
+        <button class="filter-btn" data-filter="region" data-value="europe">Europe</button>
+        <button class="filter-btn" data-filter="region" data-value="asia">Asia/Pacific</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Advisory:</span>
+        <button class="filter-btn active" data-filter="advisory" data-value="all">All</button>
+        <button class="filter-btn" data-filter="advisory" data-value="domestic">Domestic</button>
+        <button class="filter-btn" data-filter="advisory" data-value="1">Level 1</button>
+        <button class="filter-btn" data-filter="advisory" data-value="2">Level 1-2</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Beach:</span>
+        <button class="filter-btn active" data-filter="beach" data-value="all">All</button>
+        <button class="filter-btn" data-filter="beach" data-value="yes">Yes</button>
+        <button class="filter-btn" data-filter="beach" data-value="no">No</button>
+      </div>
+    </div>
+    <div class="mobile-sort-row">
+      <span class="mobile-sort-label">Sort by:</span>
+      <select id="mobileSortSelect" style="padding: 6px 10px; border-radius: 6px; border: 0.5px solid #ccc; font-size: 13px; font-family: inherit;">
+        <option value="rank-asc">Recommended</option>
+        <option value="name-asc">Name (A-Z)</option>
+        <option value="priceLow-asc">Flight price (low to high)</option>
+        <option value="priceLow-desc">Flight price (high to low)</option>
+        <option value="flightHours-asc">Flight time (short to long)</option>
+        <option value="flightHours-desc">Flight time (long to short)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="result-count" id="resultCount"></div>
+
+  <div class="table-wrapper">
+    <div class="table-scroll">
+      <table id="destTable">
+        <thead>
+          <tr>
+            <th data-sort="name">Destination <span class="sort-icon">↕</span></th>
+            <th data-sort="advisory">Advisory <span class="sort-icon">↕</span></th>
+            <th data-sort="visa">Visa <span class="sort-icon">↕</span></th>
+            <th data-sort="flightHours">Flight <span class="sort-icon">↕</span></th>
+            <th data-sort="priceLow">Est. Flight $ <span class="sort-icon">↕</span></th>
+            <th data-sort="bestDates">Best Dates <span class="sort-icon">↕</span></th>
+            <th data-sort="beach">Beach <span class="sort-icon">↕</span></th>
+            <th data-sort="food">Sushi/Food <span class="sort-icon">↕</span></th>
+            <th data-sort="vibe">Vibe <span class="sort-icon">↕</span></th>
+            <th data-sort="activities">Things to Do <span class="sort-icon">↕</span></th>
+            <th>Pros &amp; Cons</th>
+            <th data-sort="notes">Notes <span class="sort-icon">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span class="legend-item"><span class="badge badge-l1">Level 1</span> Exercise normal precautions</span>
+    <span class="legend-item"><span class="badge badge-l2">Level 2</span> Exercise increased caution</span>
+    <span class="legend-item"><span class="badge badge-domestic">Domestic</span> No advisory needed</span>
+    <span class="legend-item"><span class="badge badge-rec">Top pick</span> Best fit for your criteria</span>
+  </div>
+
+  <footer>
+    Travel advisory data sourced from the U.S. State Department. ETIAS does not launch until Q4 2026 — your travel dates require only a US passport for European destinations. Always verify current conditions at <a href="https://travel.state.gov" target="_blank" rel="noopener">travel.state.gov</a> before booking.
+  </footer>
+</div>
+
+<script>
+const destinations = [
+  {
+    name: "Portugal (Lisbon + Algarve)",
+    region: "europe",
+    advisory: 1,
+    advisoryText: "Level 1",
+    advisoryFull: "Level 1: Exercise Normal Precautions",
+    visa: "Visa-free, 90 days",
+    flight: "1 stop, ~14 hrs",
+    flightHours: 14,
+    price: "$800-$1,300",
+    priceLow: 800,
+    bestDates: "June 7-13 or 21-27",
+    beach: "Yes (Atlantic)",
+    food: "Excellent seafood, good sushi in Lisbon",
+    vibe: "Romantic + beach hybrid",
+    activities: "Lisbon tram 28, Belém pastries, Sintra day trip, Benagil sea caves, kayaking, Lagos cliff hikes",
+    pros: ["Best value for money", "Mild summer weather", "English widely spoken", "Both city + beach in one trip", "Excellent food scene"],
+    cons: ["Atlantic water is cold", "Long flight with connection", "Algarve gets crowded in summer"],
+    notes: "Best overall value. Ground budget stretches very well.",
+    recommended: true,
+    rank: 1,
+    link: "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/portugal-travel-advisory.html"
+  },
+  {
+    name: "Tokyo + Okinawa, Japan",
+    region: "asia",
+    advisory: 1,
+    advisoryText: "Level 1",
+    advisoryFull: "Level 1: Exercise Normal Precautions",
+    visa: "Visa-free, 90 days",
+    flight: "1 stop, 13-15 hrs",
+    flightHours: 14,
+    price: "$1,200-$1,800",
+    priceLow: 1200,
+    bestDates: "Aug 2-8",
+    beach: "Yes (Okinawa)",
+    food: "World-class sushi",
+    vibe: "Tropical + culture",
+    activities: "Tsukiji market tour, teamLab Planets, Okinawa snorkeling at Kerama Islands, Shuri Castle, Cape Manzamo",
+    pros: ["World's best sushi", "Incredibly safe", "Unique culture + beach combo", "Excellent public transport", "Strong yen value for dollars"],
+    cons: ["Long flight", "August is hot and humid", "Language barrier outside Tokyo", "Departure tax tripling after July 1"],
+    notes: "Japan raising departure tax after July 1, 2026. Best sushi destination on the list.",
+    recommended: true,
+    rank: 2,
+    link: "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/japan-travel-advisory.html"
+  },
+  {
+    name: "Maui, Hawaii",
+    region: "americas",
+    advisory: 0,
+    advisoryText: "Domestic",
+    advisoryFull: "Domestic - no advisory",
+    visa: "None needed",
+    flight: "Direct, 6 hrs",
+    flightHours: 6,
+    price: "$500-$900",
+    priceLow: 500,
+    bestDates: "June 7-13 or 21-27",
+    beach: "Yes (world-class)",
+    food: "Sansei, Morimoto, Nuka",
+    vibe: "Tropical relaxed",
+    activities: "Road to Hana, Haleakalā sunrise, Molokini snorkel, luau, Iao Valley, surf lessons",
+    pros: ["No passport needed", "Direct flight from PDX", "World-class beaches", "Great sushi options", "Familiar culture and language"],
+    cons: ["Expensive food and activities", "Tourist crowds at top spots", "Limited nightlife", "Lahaina still rebuilding from fires"],
+    notes: "Easiest logistics, no passport needed.",
+    recommended: true,
+    rank: 3,
+    link: "https://www.gohawaii.com/islands/maui"
+  },
+  {
+    name: "Bali, Indonesia",
+    region: "asia",
+    advisory: 2,
+    advisoryText: "Level 2",
+    advisoryFull: "Level 2: Exercise Increased Caution",
+    visa: "Visa on Arrival ($35), 30 days",
+    flight: "1 stop, 18-22 hrs",
+    flightHours: 20,
+    price: "$1,100-$1,500",
+    priceLow: 1100,
+    bestDates: "June or July",
+    beach: "Yes",
+    food: "Great food, good sushi in Seminyak",
+    vibe: "Tropical romantic",
+    activities: "Ubud rice terraces, Uluwatu cliff temple sunset, surf lessons, couples spa, Mt. Batur sunrise hike, Nusa Penida",
+    pros: ["Budget stretches incredibly far", "Stunning landscapes", "World-class spas at low prices", "Dry season aligns with your dates", "Romantic resorts"],
+    cons: ["Very long flight (18-22 hrs)", "Traffic can be intense", "Tap water not drinkable", "Some areas overdeveloped"],
+    notes: "Dry season. $2k ground budget goes very far here.",
+    rank: 4,
+    link: "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/indonesia-travel-advisory.html"
+  },
+  {
+    name: "Greek Islands (Santorini/Milos)",
+    region: "europe",
+    advisory: 1,
+    advisoryText: "Level 1",
+    advisoryFull: "Level 1: Exercise Normal Precautions",
+    visa: "Visa-free, 90 days",
+    flight: "1 stop + ferry, ~15 hrs",
+    flightHours: 15,
+    price: "$1,000-$1,500",
+    priceLow: 1000,
+    bestDates: "June 7-13 or 21-27",
+    beach: "Yes",
+    food: "Great Greek/seafood",
+    vibe: "Romantic + beach",
+    activities: "Oia sunset, catamaran cruise, Santo Wines tasting, Milos boat tour to Kleftiko, ATV exploring, Akrotiri ruins",
+    pros: ["Iconic romantic destination", "Beautiful warm water", "Excellent Mediterranean food", "Great wine scene", "Stunning sunsets"],
+    cons: ["Santorini very crowded/expensive", "Ferry logistics add complexity", "August is brutally hot", "Limited sushi options"],
+    notes: "August is hot and crowded - book June for best experience.",
+    rank: 5,
+    link: "https://travel.state.gov/en/international-travel/travel-advisories/greece.html"
+  },
+  {
+    name: "Amalfi Coast / Cinque Terre, Italy",
+    region: "europe",
+    advisory: 2,
+    advisoryText: "Level 2",
+    advisoryFull: "Level 2: Exercise Increased Caution",
+    visa: "Visa-free, 90 days",
+    flight: "1 stop, 14-15 hrs",
+    flightHours: 15,
+    price: "$900-$1,500",
+    priceLow: 900,
+    bestDates: "June 7-13",
+    beach: "Yes (Med)",
+    food: "Iconic Italian",
+    vibe: "Romantic + beach",
+    activities: "Boat tour to Capri/Positano, Path of the Gods hike, lemon farm tour, Cinque Terre village hop, Pompeii day trip",
+    pros: ["Incredibly romantic", "World-famous cuisine", "Beautiful coastline", "Rich history nearby", "Great wine"],
+    cons: ["Very expensive in summer", "Crowded, especially July/August", "Narrow roads/limited parking", "Limited sushi"],
+    notes: "June avoids peak crowds.",
+    rank: 6,
+    link: "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/italy-travel-advisory.html"
+  },
+  {
+    name: "Oahu, Hawaii",
+    region: "americas",
+    advisory: 0,
+    advisoryText: "Domestic",
+    advisoryFull: "Domestic - no advisory",
+    visa: "None needed",
+    flight: "Direct, 6 hrs",
+    flightHours: 6,
+    price: "$500-$900",
+    priceLow: 500,
+    bestDates: "June 7-13 or 21-27",
+    beach: "Yes",
+    food: "Sushi Sho (top tier)",
+    vibe: "Tropical + urban",
+    activities: "Diamond Head hike, Pearl Harbor, North Shore day trip, Hanauma Bay snorkel, Waikiki surfing, Lanikai Pillbox hike",
+    pros: ["Best Hawaii food scene", "Direct flight from PDX", "No passport needed", "Top-tier sushi (Sushi Sho)", "Mix of urban + beach"],
+    cons: ["Waikiki very touristy", "More crowded than Maui", "Traffic in Honolulu", "Expensive"],
+    notes: "Deepest food scene in Hawaii.",
+    rank: 7,
+    link: "https://www.gohawaii.com/islands/oahu"
+  },
+  {
+    name: "Costa Rica (Guanacaste)",
+    region: "americas",
+    advisory: 2,
+    advisoryText: "Level 2",
+    advisoryFull: "Level 2: Exercise Increased Caution",
+    visa: "Visa-free, 90 days",
+    flight: "1 stop, 8-10 hrs",
+    flightHours: 9,
+    price: "$500-$800",
+    priceLow: 500,
+    bestDates: "June 7-13",
+    beach: "Yes (Pacific)",
+    food: "Great seafood, not sushi",
+    vibe: "Tropical romantic",
+    activities: "Rincón de la Vieja volcano hike, ziplining, hot springs, Tamarindo surf, catamaran sunset cruise, Palo Verde wildlife",
+    pros: ["Adventure + beach combo", "Friendly culture", "Great wildlife viewing", "Lower prices in green season", "Eco-tourism focus"],
+    cons: ["Afternoon rain daily in June-Aug", "Limited sushi/Asian food", "Long travel time with connection", "Some areas remote"],
+    notes: "Green season = afternoon rain.",
+    rank: 9,
+    link: "https://travel.state.gov/en/international-travel/travel-advisories/costa-rica.html"
+  },
+  {
+    name: "Cabo San Lucas, Mexico",
+    region: "americas",
+    advisory: 2,
+    advisoryText: "Level 2",
+    advisoryFull: "Level 2: Exercise Increased Caution (Baja California Sur)",
+    visa: "Visa-free, 180 days (FMM card)",
+    flight: "Direct, 4.5 hrs",
+    flightHours: 4.5,
+    price: "$400-$600",
+    priceLow: 400,
+    bestDates: "June 7-13",
+    beach: "Yes",
+    food: "Good seafood",
+    vibe: "Tropical resort",
+    activities: "Arch of Cabo boat tour, sunset sail, ATV desert tours, San José del Cabo art walk, whale shark snorkel, fishing",
+    pros: ["Short direct flight", "Cheapest flights on the list", "Dry desert climate", "Strong resort infrastructure", "English widely spoken"],
+    cons: ["Strong undertow at many beaches", "Less authentic Mexico feel", "Limited cultural depth", "Hot/humid by August"],
+    notes: "Hot/humid by August.",
+    rank: 10,
+    link: "https://travel.state.gov/en/international-travel/travel-advisories/mexico.html"
+  },
+  {
+    name: "Paris + Loire Valley, France",
+    region: "europe",
+    advisory: 2,
+    advisoryText: "Level 2",
+    advisoryFull: "Level 2: Exercise Increased Caution",
+    visa: "Visa-free, 90 days",
+    flight: "1 stop, ~13 hrs",
+    flightHours: 13,
+    price: "$900-$1,400",
+    priceLow: 900,
+    bestDates: "June 7-13 or 21-27",
+    beach: "No (river/countryside)",
+    food: "World-class French, excellent sushi in Paris",
+    vibe: "Iconic romantic",
+    activities: "Seine evening cruise, Musée d'Orsay, Montmartre, day-trip to Versailles, Loire Valley château tour (Chenonceau, Chambord), wine tasting in Sancerre, hot air balloon over vineyards",
+    pros: ["The quintessential romantic destination", "World-class food and wine", "Beautiful countryside chateaux", "Excellent rail connections", "June is ideal weather"],
+    cons: ["Not warm beach", "Crowded tourist areas", "Pickpocketing in Paris", "Expensive in summer"],
+    notes: "Pair 3 days in Paris with 4 days driving the Loire Valley for the full experience.",
+    rank: 11,
+    link: "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/france-travel-advisory.html"
+  },
+  {
+    name: "New York City",
+    region: "americas",
+    advisory: 0,
+    advisoryText: "Domestic",
+    advisoryFull: "Domestic - no advisory",
+    visa: "None needed",
+    flight: "Direct, ~5.5 hrs",
+    flightHours: 5.5,
+    price: "$300-$500",
+    priceLow: 300,
+    bestDates: "June 7-13 or 21-27",
+    beach: "No (city)",
+    food: "World-class sushi, every cuisine imaginable",
+    vibe: "Urban romantic",
+    activities: "Broadway show, rooftop dinners, Central Park, MoMA/Met, Brooklyn Bridge walk at sunset, Greenwich Village exploring, Williamsburg food scene, Top of the Rock, jazz at Village Vanguard",
+    pros: ["Some of the world's best sushi (Masa, Nakazawa, Noda)", "Direct flight from PDX", "Endless dining and activities", "No language barrier", "Cheapest flights on the list"],
+    cons: ["Not a beach destination", "July/August can be hot and humid", "Expensive food and hotels", "Crowded in summer"],
+    notes: "June is the sweet spot before peak summer heat.",
+    rank: 11,
+    link: "https://www.nyc.gov/site/visit/index.page"
+  },
+  {
+    name: "Sarasota, Florida",
+    region: "americas",
+    advisory: 0,
+    advisoryText: "Domestic",
+    advisoryFull: "Domestic - no advisory",
+    visa: "None needed",
+    flight: "1 stop, ~8 hrs",
+    flightHours: 8,
+    price: "$400-$700",
+    priceLow: 400,
+    bestDates: "June 7-13",
+    beach: "Yes (Siesta Key, world-renowned)",
+    food: "Strong seafood, good sushi options",
+    vibe: "Tropical relaxed",
+    activities: "Siesta Key Beach (white quartz sand), Lido Key, Ringling Museum, St. Armands Circle shopping, Myakka River State Park, sunset cruises, day trip to Anna Maria Island",
+    pros: ["No passport needed", "Siesta Key consistently ranks as a top US beach", "Warm Gulf water swimmable", "Less crowded than Miami/Keys", "Strong cultural scene for a beach town"],
+    cons: ["Hot and humid in summer", "Afternoon thunderstorms common", "Hurricane season starts June 1", "Long flight with connection"],
+    notes: "Book early June to avoid peak hurricane risk; check storm forecasts before booking.",
+    rank: 12,
+    link: "https://www.visitsarasota.com/"
+  },
+  {
+    name: "Barcelona, Spain",
+    region: "europe",
+    advisory: 2,
+    advisoryText: "Level 2",
+    advisoryFull: "Level 2: Exercise Increased Caution",
+    visa: "Visa-free, 90 days",
+    flight: "1 stop, ~14 hrs",
+    flightHours: 14,
+    price: "$800-$1,300",
+    priceLow: 800,
+    bestDates: "June 7-13 or 21-27",
+    beach: "Yes (Mediterranean, in-city)",
+    food: "World-class tapas, excellent sushi (Koy Shunka, Dos Palillos)",
+    vibe: "Urban beach + culture",
+    activities: "Sagrada Família, Park Güell, Gothic Quarter walking, Barceloneta beach, La Boqueria market, tapas crawl in El Born, day trip to Montserrat, sunset at Bunkers del Carmel",
+    pros: ["City + beach in one destination", "Incredible food scene including top sushi", "Beautiful architecture (Gaudí)", "Great nightlife", "Vibrant culture"],
+    cons: ["Notorious pickpocketing", "Anti-tourism sentiment in summer", "Beaches get crowded", "Hot in July/August"],
+    notes: "June 7-13 ideal before peak summer heat and crowds. Stay vigilant about pickpocketing.",
+    rank: 13,
+    link: "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/spain-travel-advisory.html"
+  },
+  {
+    name: "San Diego, California",
+    region: "americas",
+    advisory: 0,
+    advisoryText: "Domestic",
+    advisoryFull: "Domestic - no advisory",
+    visa: "None needed",
+    flight: "Direct, ~2.5 hrs",
+    flightHours: 2.5,
+    price: "$200-$400",
+    priceLow: 200,
+    bestDates: "Any of your dates",
+    beach: "Yes (Pacific)",
+    food: "Excellent sushi scene, world-class Mexican",
+    vibe: "Beach + city relaxed",
+    activities: "La Jolla Cove kayaking with sea lions, Balboa Park, Coronado Beach, Gaslamp Quarter dining, Torrey Pines hike, Sunset Cliffs, day trip to wineries in Temecula",
+    pros: ["Cheapest flights of all options", "Short direct flight", "Perfect summer weather (avg 72°F)", "No humidity", "Excellent food including top-tier sushi"],
+    cons: ["Pacific water is cold (~65°F even in summer)", "May/June Gloom morning clouds", "Less exotic feel"],
+    notes: "Most reliable weather of any option. Easiest possible trip logistics.",
+    rank: 14,
+    link: "https://www.sandiego.org/"
+  }
+];
+
+let activeFilters = { region: "all", advisory: "all", beach: "all" };
+let searchQuery = "";
+let sortKey = "rank";
+let sortDir = "asc";
+
+const tbody = document.getElementById("tbody");
+const searchInput = document.getElementById("searchInput");
+const clearBtn = document.getElementById("clearBtn");
+const resultCount = document.getElementById("resultCount");
+const mobileSortSelect = document.getElementById("mobileSortSelect");
+
+function advisoryBadge(d) {
+  if (d.advisory === 0) return `<span class="badge badge-domestic">Domestic</span>`;
+  if (d.advisory === 1) return `<span class="badge badge-l1">Level 1</span>`;
+  if (d.advisory === 2) return `<span class="badge badge-l2">Level 2</span>`;
+  if (d.advisory === 3) return `<span class="badge badge-l3">Level 3</span>`;
+  return "";
+}
+
+function getFiltered() {
+  let filtered = destinations.filter(d => {
+    if (activeFilters.region !== "all" && d.region !== activeFilters.region) return false;
+    if (activeFilters.advisory === "domestic" && d.advisory !== 0) return false;
+    if (activeFilters.advisory === "1" && d.advisory > 1) return false;
+    if (activeFilters.advisory === "2" && d.advisory > 2) return false;
+    if (activeFilters.beach === "yes" && !d.beach.toLowerCase().startsWith("yes")) return false;
+    if (activeFilters.beach === "no" && d.beach.toLowerCase().startsWith("yes")) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const haystack = [d.name, d.food, d.vibe, d.activities, d.notes, d.beach, d.bestDates, ...d.pros, ...d.cons].join(" ").toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    let av = a[sortKey];
+    let bv = b[sortKey];
+    if (typeof av === "string") av = av.toLowerCase();
+    if (typeof bv === "string") bv = bv.toLowerCase();
+    if (av < bv) return sortDir === "asc" ? -1 : 1;
+    if (av > bv) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  return filtered;
+}
+
+function render() {
+  const filtered = getFiltered();
+  resultCount.textContent = filtered.length === destinations.length
+    ? `Showing all ${filtered.length} destinations`
+    : `Showing ${filtered.length} of ${destinations.length} destinations`;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12" class="empty-state">No destinations match your filters. Try clearing the search or adjusting filters.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(d => `
+    <tr>
+      <td data-label="Destination" class="mobile-header">
+        <span class="dest-name">${escapeHtml(d.name)}</span>${d.recommended ? '<span class="badge badge-rec">Top pick</span>' : ''}
+      </td>
+      <td data-label="Advisory">
+        ${advisoryBadge(d)}
+        <div style="font-size: 11px; color: #666; margin-top: 4px;"><a href="${d.link}" target="_blank" rel="noopener">${escapeHtml(d.advisoryFull)}</a></div>
+      </td>
+      <td data-label="Visa">${escapeHtml(d.visa)}</td>
+      <td data-label="Flight">${escapeHtml(d.flight)}</td>
+      <td data-label="Est. Flight $">${escapeHtml(d.price)}</td>
+      <td data-label="Best Dates">${escapeHtml(d.bestDates)}</td>
+      <td data-label="Beach">${escapeHtml(d.beach)}</td>
+      <td data-label="Sushi / Food">${escapeHtml(d.food)}</td>
+      <td data-label="Vibe">${escapeHtml(d.vibe)}</td>
+      <td data-label="Things to Do">${escapeHtml(d.activities)}</td>
+      <td data-label="Pros &amp; Cons">
+        <div class="pros-cons">
+          <div class="pros-cons-section">
+            <div class="pros-cons-label pros-label">+ Pros</div>
+            <ul>${d.pros.map(p => `<li>${escapeHtml(p)}</li>`).join("")}</ul>
+          </div>
+          <div class="pros-cons-section">
+            <div class="pros-cons-label cons-label">− Cons</div>
+            <ul>${d.cons.map(c => `<li>${escapeHtml(c)}</li>`).join("")}</ul>
+          </div>
+        </div>
+      </td>
+      <td data-label="Notes">${escapeHtml(d.notes)}</td>
+    </tr>
+  `).join("");
+
+  document.querySelectorAll("th").forEach(th => {
+    th.classList.toggle("sorted", th.dataset.sort === sortKey);
+    const icon = th.querySelector(".sort-icon");
+    if (th.dataset.sort === sortKey) {
+      icon.textContent = sortDir === "asc" ? "↑" : "↓";
+    } else {
+      icon.textContent = "↕";
+    }
+  });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, m => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[m]));
+}
+
+document.querySelectorAll("th[data-sort]").forEach(th => {
+  th.addEventListener("click", () => {
+    const key = th.dataset.sort;
+    if (sortKey === key) {
+      sortDir = sortDir === "asc" ? "desc" : "asc";
+    } else {
+      sortKey = key;
+      sortDir = "asc";
+    }
+    mobileSortSelect.value = `${sortKey}-${sortDir}`;
+    render();
+  });
+});
+
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const filter = btn.dataset.filter;
+    document.querySelectorAll(`.filter-btn[data-filter="${filter}"]`).forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeFilters[filter] = btn.dataset.value;
+    render();
+  });
+});
+
+searchInput.addEventListener("input", e => {
+  searchQuery = e.target.value;
+  render();
+});
+
+clearBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  searchQuery = "";
+  document.querySelectorAll(".filter-btn").forEach(b => {
+    if (b.dataset.value === "all") b.classList.add("active");
+    else b.classList.remove("active");
+  });
+  activeFilters = { region: "all", advisory: "all", beach: "all" };
+  sortKey = "rank";
+  sortDir = "asc";
+  mobileSortSelect.value = "rank-asc";
+  render();
+});
+
+mobileSortSelect.addEventListener("change", e => {
+  const [key, dir] = e.target.value.split("-");
+  sortKey = key;
+  sortDir = dir;
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
